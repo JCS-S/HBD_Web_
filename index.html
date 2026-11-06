@@ -7,7 +7,7 @@
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
     <meta name="theme-color" content="#000000" />
-    <title>爸爸的时光档案</title>
+    <title>生日快乐</title>
     <style>
       /* 全站基调：黑色摄影档案。把爸爸在合照中的位置改在这里。 */
       :root {
@@ -21,6 +21,20 @@
         --dad-y: 1%;
         --dad-scale: 2.5;
       }
+
+      /* 手机竖屏专用：调整封面在手机上的裁切与放大焦点。 */
+      @media (max-width: 600px) and (orientation: portrait) {
+        :root {
+          --dad-x: 78%;
+          --dad-y: 6%;
+          --dad-scale: 2.8;
+        }
+
+        .family-image {
+          background-position: 72% top;
+        }
+      }
+
       * {
         box-sizing: border-box;
       }
