@@ -1,0 +1,1304 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#000000" />
+    <title>爸爸的时光档案</title>
+    <style>
+      /* 全站基调：黑色摄影档案。把爸爸在合照中的位置改在这里。 */
+      :root {
+        --bg: #000;
+        --ink: #f4f2ef;
+        --dim: #8c8783;
+        --line: #f4f2ef47;
+        --pad: clamp(15px, 2.8vw, 34px);
+        --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+        --dad-x: 83%;
+        --dad-y: 1%;
+        --dad-scale: 2.5;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: #000;
+      }
+      body {
+        overflow: hidden;
+        color: var(--ink);
+        font:
+          300 14px/1.5 Arial,
+          sans-serif;
+      }
+      button {
+        border: 0;
+        background: transparent;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+      }
+      [hidden] {
+        display: none !important;
+      }
+      button:focus-visible,
+      input:focus-visible {
+        outline: 2px solid #fff;
+        outline-offset: 4px;
+      }
+      .screen {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+      }
+
+      /* 首页：纯合照。真实合照替换 .family-image 的 background-image。 */
+      #family {
+        z-index: 10;
+        background: #000;
+      }
+      .family-image {
+        position: absolute;
+        inset: 0;
+        background-image: url("cover.png");
+        background-size: cover;
+        background-position: center;
+        transform-origin: var(--dad-x) var(--dad-y);
+        transition: transform 5s var(--ease);
+      }
+      #family.zoom .family-image {
+        transform: scale(var(--dad-scale));
+      }
+      .cover-date {
+        position: fixed;
+        z-index: 2;
+        right: var(--pad);
+        bottom: var(--pad);
+        color: #f4f2efd9;
+        font:
+          400 clamp(15px, 2vw, 24px) Georgia,
+          serif;
+        letter-spacing: 0.08em;
+        text-shadow: 0 1px 10px #000;
+      }
+
+      /* 密码：这一步替代参考站的影片入口。 */
+      #password {
+        z-index: 11;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        background: #000;
+      }
+      .pass-box {
+        width: min(88vw, 430px);
+        padding: 36px 0;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+      .eyebrow {
+        margin: 0;
+        color: var(--dim);
+        font-size: 10px;
+        letter-spacing: 0.24em;
+      }
+      .pass-box h1 {
+        margin: 18px 0 26px;
+        font:
+          400 clamp(34px, 6vw, 58px) / 1.05 Georgia,
+          serif;
+      }
+      .pass-row {
+        display: flex;
+        gap: 8px;
+      }
+      .pass-row input {
+        flex: 1;
+        min-width: 0;
+        padding: 13px;
+        border: 1px solid var(--line);
+        background: #111;
+        color: #fff;
+        text-align: center;
+      }
+      .pass-row button {
+        padding: 0 16px;
+        background: #f4f2ef;
+        color: #000;
+        font-weight: bold;
+      }
+      .hint {
+        min-height: 20px;
+        margin: 14px 0 0;
+        color: #b9b4ae;
+        font-size: 12px;
+        line-height: 2;
+        white-space: pre-line;
+      }
+
+      /* 加载遮罩：密码正确后暂时盖住画面，等缩略图准备完再开启档案。 */
+      #loading {
+        z-index: 15;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        background: #000;
+      }
+      .loading-box {
+        width: min(78vw, 360px);
+        padding: 30px 0;
+        border-top: 1px solid var(--line);
+        border-bottom: 1px solid var(--line);
+      }
+      .loading-box p {
+        margin: 0;
+        font:
+          400 clamp(24px, 4vw, 38px) Georgia,
+          serif;
+      }
+      .loading-box small {
+        display: block;
+        margin-top: 13px;
+        color: var(--dim);
+        font-size: 10px;
+        letter-spacing: 0.18em;
+      }
+      .loading-line {
+        width: 100%;
+        height: 1px;
+        margin-top: 22px;
+        overflow: hidden;
+        background: #ffffff24;
+      }
+      .loading-line::after {
+        content: "";
+        display: block;
+        width: 42%;
+        height: 100%;
+        background: var(--ink);
+        animation: loading-slide 1.1s ease-in-out infinite;
+      }
+      @keyframes loading-slide {
+        from {
+          transform: translateX(-110%);
+        }
+        to {
+          transform: translateX(350%);
+        }
+      }
+
+      /* 顶部 chrome、照片球、网格：保留摄影档案的核心构图。 */
+      #archive {
+        z-index: 12;
+        perspective: 1050px;
+        background: radial-gradient(
+          ellipse at center,
+          #282529 0,
+          #090909 51%,
+          #000 80%
+        );
+      }
+      .chrome {
+        position: fixed;
+        z-index: 22;
+        top: var(--pad);
+        left: var(--pad);
+        right: var(--pad);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        mix-blend-mode: difference;
+      }
+      .chrome-actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .wordmark {
+        font:
+          400 clamp(19px, 2.2vw, 28px) Georgia,
+          serif;
+      }
+      .menu-button {
+        min-width: 44px;
+        min-height: 44px;
+        text-align: right;
+        font-size: 12px;
+        letter-spacing: 0.1em;
+      }
+      #world {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        transform-style: preserve-3d;
+        will-change: transform;
+      }
+      .card {
+        position: absolute;
+        width: clamp(72px, 11vw, 128px);
+        aspect-ratio: 3/2;
+        overflow: hidden;
+        border: 1px solid #ffffff77;
+        border-radius: 2px;
+        background: var(--tone);
+        box-shadow: 0 20px 42px #000b;
+        transform-style: preserve-3d;
+      }
+      .card:after {
+        content: "OPEN";
+        position: absolute;
+        right: 8px;
+        bottom: 7px;
+        font-size: 9px;
+        letter-spacing: 0.13em;
+      }
+      /* 每张照片球卡片左下角的时间戳，由 JavaScript 的 data-stamp 写入。 */
+      .card:before {
+        content: attr(data-stamp);
+        position: absolute;
+        left: 8px;
+        bottom: 7px;
+        max-width: calc(100% - 46px);
+        overflow: hidden;
+        color: #fff;
+        font-size: 8px;
+        letter-spacing: 0.04em;
+        text-overflow: ellipsis;
+        text-shadow: 0 1px 6px #000;
+        white-space: nowrap;
+      }
+      .card b {
+        display: none;
+      }
+      /* 标题在 #world 之外，因此球体旋转时它始终固定于屏幕中心。 */
+      #headline {
+        position: absolute;
+        z-index: 21;
+        top: 0;
+        left: 0;
+        width: fit-content;
+        max-width: 82vw;
+        margin: 0;
+        border: 0;
+        pointer-events: auto;
+        text-align: center;
+        font:
+          400 clamp(28px, 4.5vw, 62px) / 1.05 Georgia,
+          serif;
+        text-shadow: 0 2px 34px #000;
+        /* transform: translate(-50%, -50%); */
+        transition: opacity 0.25s;
+      }
+      #headline:hover .echo-front,
+      #headline:focus-visible .echo-front {
+        transform: scale(1.04);
+      }
+      #headline.is-opening {
+        pointer-events: none;
+      }
+      /* 回声文字：前景是可读文字，后方副本会随指针滞后拖曳。 */
+      .echo-text {
+        position: relative;
+        display: block;
+        isolation: isolate;
+      }
+      .echo-front,
+      .echo-copy,
+      .echo-burst {
+        display: block;
+        white-space: nowrap;
+        will-change: opacity, transform;
+      }
+      .echo-front {
+        position: relative;
+        z-index: 2;
+        transition: transform 0.25s var(--ease);
+      }
+      .echo-copy,
+      .echo-burst {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        pointer-events: none;
+        color: #d8d1c6;
+        filter: blur(1px);
+      }
+      .echo-bursts {
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+      }
+      #headline.is-opening .echo-front,
+      #headline.is-opening .echo-copy {
+        animation: title-expand 1s var(--ease) forwards;
+      }
+      @keyframes title-expand {
+        to {
+          opacity: 0;
+          filter: blur(3px);
+          transform: scale(8);
+        }
+      }
+      .sub {
+        display: block;
+        margin-top: 13px;
+        color: #a9a49f;
+        font:
+          10px Arial,
+          sans-serif;
+        letter-spacing: 0.22em;
+      }
+      .cue {
+        position: fixed;
+        z-index: 21;
+        bottom: var(--pad);
+        left: 50%;
+        transform: translateX(-50%);
+        color: #aaa49e;
+        font-size: 20px;
+        letter-spacing: 0.1em;
+        white-space: nowrap;
+      }
+      .grid-button {
+        position: fixed;
+        z-index: 23;
+        bottom: var(--pad);
+        left: var(--pad);
+        width: 44px;
+        height: 44px;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
+        padding: 9px;
+      }
+      .grid-button i {
+        background: #fff;
+        border-radius: 1px;
+      }
+      /* BGM 控制：开始播放后固定在右下角，可随时暂停或继续。 */
+      .music-toggle {
+        min-width: 86px;
+        min-height: 44px;
+        padding: 0 12px;
+        border: 1px solid var(--line);
+        background: #000b;
+        color: var(--ink);
+        font-size: 10px;
+        letter-spacing: 0.12em;
+        backdrop-filter: blur(8px);
+      }
+      .music-toggle:hover {
+        background: #f4f2ef;
+        color: #000;
+      }
+
+      /* 网格视图：菜单中的“所有回忆”与左下角按钮都能打开。 */
+      #grid {
+        z-index: 30;
+        overflow: auto;
+        padding: 95px var(--pad) 50px;
+        background: #000;
+      }
+      .grid-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+      }
+      .grid-head h2 {
+        margin: 0;
+        font:
+          400 clamp(28px, 5vw, 52px) Georgia,
+          serif;
+      }
+      .grid-close {
+        font-size: 12px;
+        letter-spacing: 0.12em;
+      }
+      .grid-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 14px;
+        max-width: 1600px;
+        margin: auto;
+      }
+      .grid-item {
+        min-height: 160px;
+        aspect-ratio: 3/2;
+        position: relative;
+        overflow: hidden;
+        background: var(--tone);
+        border: 1px solid #ffffff30;
+        text-align: left;
+      }
+      .grid-item span {
+        position: absolute;
+        inset: auto 0 0;
+        padding: 28px 13px 12px;
+        background: linear-gradient(transparent, #000c);
+        font:
+          400 16px Georgia,
+          serif;
+      }
+
+      /* 照片灯箱：故事文字和大图占位；照片路径统一维护在 STORIES。 */
+      #lightbox {
+        z-index: 60;
+        display: grid;
+        place-items: center;
+        padding: 80px var(--pad) var(--pad);
+        background: #000d;
+        backdrop-filter: blur(10px);
+      }
+      .plate {
+        width: min(100%, 900px);
+        background: #0a0a0a;
+        border: 1px solid var(--line);
+        position: relative;
+      }
+      .close {
+        position: absolute;
+        z-index: 2;
+        right: 10px;
+        top: 10px;
+        width: 44px;
+        height: 44px;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        background: #0009;
+        font-size: 20px;
+      }
+      .plate-grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        min-height: 430px;
+      }
+      .shot {
+        position: relative;
+        display: grid;
+        place-items: center;
+        min-height: 300px;
+        background: var(--tone);
+        font-weight: bold;
+        text-align: center;
+      }
+      /* 仅多照片回忆显示：在同一张照片卡片的两张原图间切换。 */
+      .photo-toggle {
+        position: absolute;
+        right: 13px;
+        bottom: 13px;
+        padding: 9px 11px;
+        border: 1px solid #ffffff6b;
+        background: #000b;
+        color: #fff;
+        font-size: 10px;
+        letter-spacing: 0.08em;
+      }
+      .meta {
+        align-self: center;
+        padding: clamp(30px, 5vw, 62px);
+      }
+      .meta h2 {
+        margin: 10px 0;
+        font:
+          400 clamp(29px, 4vw, 48px) / 1.05 Georgia,
+          serif;
+      }
+      .meta p:last-child {
+        color: #d0ccc6;
+        line-height: 1.85;
+      }
+      .pager {
+        display: flex;
+        justify-content: space-between;
+        padding: 13px;
+        border-top: 1px solid var(--line);
+      }
+      .pager button {
+        min-height: 38px;
+        font-size: 11px;
+        letter-spacing: 0.14em;
+      }
+
+      /* 生日信件：与照片灯箱共用黑底、细白边的摄影档案语言。 */
+      #letter {
+        z-index: 70;
+        display: grid;
+        place-items: center;
+        padding: max(24px, env(safe-area-inset-top)) var(--pad);
+        background: #000;
+      }
+      .letter-card {
+        position: relative;
+        width: min(88vw, 720px);
+        min-height: min(80svh, 680px);
+        max-height: calc(100svh - 24px);
+        overflow: auto;
+        padding: clamp(34px, 7vw, 76px);
+        border: 1px solid var(--line);
+        background:
+          repeating-linear-gradient(
+            to bottom,
+            #111 0,
+            #111 34px,
+            #ffffff0b 35px,
+            #111 36px
+          ),
+          linear-gradient(140deg, #121212, #070707);
+        box-shadow: 0 30px 90px #000;
+        cursor: pointer;
+      }
+      .letter-card::before {
+        content: "";
+        position: absolute;
+        inset: 11px;
+        border: 1px solid #ffffff14;
+        pointer-events: none;
+      }
+      .letter-close {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        z-index: 1;
+        width: 42px;
+        height: 42px;
+        border: 1px solid var(--line);
+        border-radius: 50%;
+        background: #0008;
+        font-size: 20px;
+      }
+      .letter-stamp {
+        margin: 0 0 28px;
+        color: var(--dim);
+        font-size: 10px;
+        letter-spacing: 0.2em;
+      }
+      .letter-title {
+        margin: 0;
+        font:
+          400 clamp(42px, 7vw, 70px) / 1.1 Georgia,
+          serif;
+      }
+      .letter-body {
+        max-width: 33em;
+        margin: 34px 0 72px;
+        color: #dedad4;
+        font-size: clamp(13px, 1.7vw, 16px);
+        line-height: 2.15;
+        white-space: pre-line;
+      }
+      .letter-title[hidden] + .letter-body {
+        margin-top: 0;
+      }
+      .letter-footer {
+        position: absolute;
+        right: clamp(34px, 7vw, 76px);
+        bottom: clamp(26px, 5vw, 48px);
+        left: clamp(34px, 7vw, 76px);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        color: var(--dim);
+        font-size: 10px;
+        letter-spacing: 0.16em;
+      }
+      .letter-footer button {
+        padding: 9px 0;
+        color: var(--ink);
+        font-size: 10px;
+        letter-spacing: 0.12em;
+      }
+
+      /* 全屏菜单保留参考页的克制黑色导航。 */
+      #menu {
+        z-index: 50;
+        display: grid;
+        place-items: center;
+        background: #050505;
+      }
+      .menu-close {
+        position: absolute;
+        top: var(--pad);
+        right: var(--pad);
+        width: 44px;
+        height: 44px;
+        font-size: 20px;
+      }
+      .menu-links {
+        display: grid;
+        gap: 50px;
+        text-align: center;
+      }
+      .menu-links button {
+        color: #f4f2ef;
+        font:
+          400 clamp(35px, 8vw, 80px) / 1.1 Georgia,
+          serif;
+        opacity: 0.6;
+        transition: opacity 0.2s;
+      }
+      .menu-links button:hover {
+        opacity: 1;
+      }
+      .menu-footer {
+        position: absolute;
+        bottom: var(--pad);
+        left: var(--pad);
+        color: var(--dim);
+        font-size: 12px;
+        line-height: 1.7;
+      }
+      @media (max-width: 620px) {
+        .pass-row {
+          flex-direction: column;
+        }
+        .pass-row button {
+          min-height: 46px;
+        }
+        .plate-grid {
+          grid-template-columns: 1fr;
+        }
+        .shot {
+          min-height: 220px;
+        }
+        .grid-list {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 8px;
+        }
+        .cue {
+          display: none;
+        }
+        .letter-card {
+          min-height: min(80vh, 680px);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- 合照入口：背景图与自动聚焦原点在 CSS 顶部可改。 -->
+    <section id="family" class="screen">
+      <div class="family-image"></div>
+      <time class="cover-date" datetime="2023-12-31">12/31/2023</time>
+    </section>
+    <!-- 背景音乐在密码正确后从加密档案中解锁；loop 表示循环播放。 -->
+    <audio id="bgm" preload="none" loop></audio>
+    <!-- 密码由加密档案验证，网页源代码中不保存密码。 -->
+    <section id="password" class="screen" hidden>
+      <form id="passwordForm" class="pass-box">
+        <p class="eyebrow">2026 · 11 · 07 九月廿九</p>
+        <h1>密码解锁</h1>
+        <div class="pass-row">
+          <input
+            id="passwordInput"
+            type="password"
+            placeholder="密码"
+          /><button>ENTER</button>
+        </div>
+        <p id="hint" class="hint"></p>
+      </form>
+    </section>
+    <!-- 密码正确后的过渡页：缩略图加载完成后自动进入档案。 -->
+    <section id="loading" class="screen" hidden>
+      <div class="loading-box">
+        <p>正在打开档案</p>
+        <div class="loading-line" aria-hidden="true"></div>
+        <small>LOADING THE MOMENTS</small>
+      </div>
+    </section>
+    <!-- 主要档案界面。 -->
+    <section id="archive" class="screen" hidden>
+      <header class="chrome">
+        <div class="wordmark"><em>MemoryArchive</em></div>
+        <div class="chrome-actions">
+          <button id="musicToggle" class="music-toggle" type="button">
+            BGM 播放
+          </button>
+          <button id="menuOpen" class="menu-button">菜单 MENU</button>
+        </div>
+      </header>
+      <!-- <div id="world"></div>
+      <h1 id="headline">
+        爸爸的时光档案<span class="sub"
+          >THE PEOPLE · THE MOMENTS · THE LOVE</span
+        >
+      </h1> -->
+      <div id="world">
+        <!-- 点击生日快乐：回声文字放大后开启多页生日信件。 -->
+        <button id="headline" type="button" aria-label="打开给爸爸的生日信">
+          <span id="echoText" class="echo-text">
+            <span class="echo-bursts" aria-hidden="true"></span>
+            <span class="echo-front">生 日 快 乐</span>
+          </span>
+          <span class="sub">THE PEOPLE · THE MOMENTS · THE LOVE</span>
+        </button>
+      </div>
+      <button id="gridOpen" class="grid-button" aria-label="查看全部回忆">
+        <i></i><i></i><i></i><i></i>
+      </button>
+      <p class="cue">- 转动旋转 · 点击照片 -</p>
+    </section>
+    <!-- 平铺照片网格。 -->
+    <section id="grid" class="screen" hidden>
+      <header class="grid-head">
+        <h2>所有回忆</h2>
+        <button id="gridClose" class="grid-close">CLOSE ×</button>
+      </header>
+      <div id="gridList" class="grid-list"></div>
+    </section>
+    <!-- 点开照片后的故事灯箱。 -->
+    <section id="lightbox" class="screen" hidden>
+      <article class="plate">
+        <button id="lightClose" class="close">×</button>
+        <div class="plate-grid">
+          <div id="shot" class="shot">
+            <button id="photoToggle" class="photo-toggle" type="button" hidden>
+              切换照片
+            </button>
+          </div>
+          <div class="meta">
+            <p id="chapter" class="eyebrow"></p>
+            <h2 id="storyTitle"></h2>
+            <p id="storyNote"></p>
+          </div>
+        </div>
+        <footer class="pager">
+          <button id="prev">← PREVIOUS</button><button id="next">NEXT →</button>
+        </footer>
+      </article>
+    </section>
+    <!-- 生日信件：LETTER_PAGES 中的四页文字会在这里按页显示。 -->
+    <section id="letter" class="screen" hidden>
+      <article id="letterCard" class="letter-card" tabindex="0">
+        <button id="letterClose" class="letter-close" type="button">×</button>
+        <p id="letterStamp" class="letter-stamp"></p>
+        <h2 id="letterTitle" class="letter-title"></h2>
+        <p id="letterBody" class="letter-body"></p>
+        <footer class="letter-footer">
+          <button id="letterPrev" type="button">← 上一页</button>
+          <span id="letterProgress"></span>
+          <button id="letterNext" type="button">下一页 →</button>
+        </footer>
+      </article>
+    </section>
+    <!-- 档案菜单。 -->
+    <section id="menu" class="screen" hidden>
+      <button id="menuClose" class="menu-close">×</button>
+      <nav class="menu-links">
+        <button id="menuArchive">所有回忆</button
+        ><button id="menuRestart">从头开始</button>
+      </nav>
+      <p class="menu-footer">
+        For Dad / Happy Birthday! <br />By SJQ · Birthday Collection
+      </p>
+    </section>
+    <!-- 此文件仅含随机 salt 和迭代次数，不含密码或任何私人内容。 -->
+    <script src="protected/config.js"></script>
+    <script>
+      "use strict";
+      /* 公开配置：密码提示可安全地放在这里；密码本身不会出现在网页里。 */
+      const CONFIG = {
+        hint: "提示：输入约定好的密码\n人无法拥有时间\n于是人们试图通过庆祝将生日这天占为己有",
+      };
+
+      /*
+       * 私人照片、信件和音乐仅在密码正确后，从加密 manifest 中读取。
+       * 请勿把密码、照片文件名或信件正文再写进这个公开 HTML 文件。
+       */
+      let LETTER_PAGES = [];
+      let STORIES = [];
+      let privateManifest = null;
+      let privateKey = null;
+      const assetUrlCache = new Map();
+      const $ = (id) => document.getElementById(id),
+        state = {
+          yaw: 0,
+          pitch: -5,
+          start: null,
+          index: 0,
+          photoIndex: 0,
+          letterPage: 0,
+        };
+      const screens = [
+        "family",
+        "password",
+        "loading",
+        "archive",
+        "grid",
+        "lightbox",
+        "letter",
+        "menu",
+      ];
+      function show(id) {
+        screens.forEach((key) => ($(key).hidden = key !== id));
+      }
+
+      /* 将 config.js 的 base64 salt 转成 Web Crypto 可用的字节数组。 */
+      function fromBase64(value) {
+        const binary = atob(value);
+        return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+      }
+
+      /*
+       * 密码不会被比较或保存：浏览器用它派生 AES 密钥。
+       * 密码错误时，解密 manifest 会失败，因此无法读取私人数据。
+       */
+      async function derivePrivateKey(password) {
+        const material = await crypto.subtle.importKey(
+          "raw",
+          new TextEncoder().encode(password),
+          "PBKDF2",
+          false,
+          ["deriveKey"],
+        );
+        return crypto.subtle.deriveKey(
+          {
+            name: "PBKDF2",
+            salt: fromBase64(window.PROTECTED_CONFIG.salt),
+            iterations: window.PROTECTED_CONFIG.iterations,
+            hash: "SHA-256",
+          },
+          material,
+          { name: "AES-GCM", length: 256 },
+          false,
+          ["decrypt"],
+        );
+      }
+
+      /* 每个 .bin 的前 12 个字节是 AES-GCM 的随机 IV。 */
+      async function decryptProtectedFile(assetId, key) {
+        const response = await fetch(`protected/${assetId}.bin`, {
+          cache: "no-store",
+        });
+        if (!response.ok) throw new Error(`Missing protected asset: ${assetId}`);
+        const bytes = new Uint8Array(await response.arrayBuffer());
+        return crypto.subtle.decrypt(
+          { name: "AES-GCM", iv: bytes.slice(0, 12) },
+          key,
+          bytes.slice(12),
+        );
+      }
+
+      /*
+       * 解密单张资源并建立临时 blob URL。图片仍只存在于当前浏览器会话中。
+       * assetId 是不含人名、文件名的匿名编号，例如 photo-01。
+       */
+      async function loadAssetUrl(assetId) {
+        if (assetUrlCache.has(assetId)) return assetUrlCache.get(assetId);
+        const bytes = await decryptProtectedFile(assetId, privateKey);
+        const mime = privateManifest.assets[assetId].mime;
+        const url = URL.createObjectURL(new Blob([bytes], { type: mime }));
+        assetUrlCache.set(assetId, url);
+        return url;
+      }
+
+      /* 解锁 manifest 后，才把故事、信件、缩略图和音乐交给页面。 */
+      async function unlockPrivateArchive(password) {
+        privateKey = await derivePrivateKey(password);
+        const manifestBytes = await decryptProtectedFile("manifest", privateKey);
+        privateManifest = JSON.parse(new TextDecoder().decode(manifestBytes));
+        STORIES = privateManifest.stories;
+        LETTER_PAGES = privateManifest.letterPages;
+
+        const bgm = $("bgm");
+        bgm.src = await loadAssetUrl(privateManifest.bgm);
+        bgm.load();
+        await preloadThumbnails();
+        buildSphere();
+      }
+
+      /*
+       * 背景音乐：多数浏览器会拦截无交互的有声自动播放。
+       * 因此页面打开时先尝试播放；若被拦截，密码输入成功后会再次开始。
+       */
+      function syncMusicToggle() {
+        const bgm = $("bgm");
+        const toggle = $("musicToggle");
+        toggle.textContent = bgm.paused ? "BGM 播放" : "BGM 暂停";
+        toggle.setAttribute("aria-pressed", String(!bgm.paused));
+      }
+
+      async function playBgm() {
+        const bgm = $("bgm");
+        /* 加密音乐尚未解锁时，不尝试播放。 */
+        if (!bgm.src) return;
+        /* 明确解除静音，避免沿用浏览器的媒体静音状态。 */
+        bgm.muted = false;
+        bgm.volume = 0.8;
+        try {
+          await bgm.play();
+          syncMusicToggle();
+        } catch {
+          /* 浏览器禁止自动播放时，等待下一次用户点击密码按钮再重试。 */
+        }
+      }
+
+      function toggleBgm() {
+        const bgm = $("bgm");
+        if (bgm.paused) {
+          void playBgm();
+        } else {
+          bgm.pause();
+          syncMusicToggle();
+        }
+      }
+
+      /*
+       * 原生版 Echo Text：将参考 React 组件的多层文字拖尾改为无依赖实现。
+       * 修改 copies / maxOffset / tint 可调节回声数量、拖尾距离与颜色。
+       */
+      let launchEchoBurst = () => {};
+      function setupBirthdayEcho() {
+        if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+        const root = $("echoText");
+        const front = root.querySelector(".echo-front");
+        const burstLayer = root.querySelector(".echo-bursts");
+        const copies = 10;
+        const maxOffset = 32;
+        const tint = "#d8d1c6";
+        const positions = Array.from({ length: copies }, () => ({
+          x: 0,
+          y: 0,
+        }));
+        const echoNodes = [];
+        let targetX = 0;
+        let targetY = 0;
+        let lastPointerTime = 0;
+
+        for (let index = 0; index < copies; index += 1) {
+          const copy = document.createElement("span");
+          const depth = (index + 1) / copies;
+          copy.className = "echo-copy";
+          copy.textContent = front.textContent;
+          copy.style.color = tint;
+          copy.style.opacity = String((1 - depth) * 0.55);
+          copy.style.filter = `blur(${(depth * 4).toFixed(1)}px)`;
+          root.insertBefore(copy, burstLayer);
+          echoNodes.push(copy);
+        }
+
+        $("headline").addEventListener(
+          "pointermove",
+          (event) => {
+            const rect = root.getBoundingClientRect();
+            if (!rect.width || !rect.height) return;
+
+            const deltaX = event.clientX - (rect.left + rect.width / 2);
+            const deltaY = event.clientY - (rect.top + rect.height / 2);
+            targetX = Math.max(-1, Math.min(1, deltaX / 260)) * maxOffset;
+            targetY =
+              Math.max(-1, Math.min(1, deltaY / 220)) * maxOffset * 0.72;
+            lastPointerTime = performance.now();
+          },
+          { passive: true },
+        );
+
+        $("headline").addEventListener("pointerleave", () => {
+          targetX = 0;
+          targetY = 0;
+          lastPointerTime = 0;
+        });
+
+        function animateEcho(now) {
+          const idle = now - lastPointerTime > 900;
+          const driftX = idle ? Math.sin(now / 1700) * 5 : targetX;
+          const driftY = idle ? Math.cos(now / 2100) * 4 : targetY;
+
+          echoNodes.forEach((node, index) => {
+            const depth = (index + 1) / copies;
+            const position = positions[index];
+            const lag = 0.13 / (1 + depth * 1.7);
+            position.x += (driftX * depth - position.x) * lag;
+            position.y += (driftY * depth - position.y) * lag;
+            node.style.transform = `translate3d(${position.x.toFixed(2)}px, ${position.y.toFixed(2)}px, 0) scale(${(1 + depth * 0.035).toFixed(3)})`;
+          });
+          requestAnimationFrame(animateEcho);
+        }
+        requestAnimationFrame(animateEcho);
+
+        launchEchoBurst = () => {
+          for (let index = 0; index < 5; index += 1) {
+            const burst = front.cloneNode(true);
+            const angle = (Math.PI * 2 * index) / 5 - Math.PI / 2;
+            const distance = 28 + index * 11;
+            burst.className = "echo-burst";
+            burst.style.color = tint;
+            burstLayer.append(burst);
+            burst.animate(
+              [
+                { opacity: 0, transform: "translate3d(0, 0, 0) scale(1)" },
+                { opacity: 0.42, offset: 0.18 },
+                {
+                  opacity: 0,
+                  transform: `translate3d(${(Math.cos(angle) * distance).toFixed(1)}px, ${(Math.sin(angle) * distance).toFixed(1)}px, 0) scale(1.36)`,
+                },
+              ],
+              { duration: 760, easing: "cubic-bezier(.22,.61,.36,1)" },
+            ).onfinish = () => burst.remove();
+          }
+        };
+      }
+
+      /* 根据 state.letterPage 渲染当前信件页面。 */
+      function renderLetter() {
+        const page = LETTER_PAGES[state.letterPage];
+        const isFirstPage = state.letterPage === 0;
+        const isLastPage = state.letterPage === LETTER_PAGES.length - 1;
+
+        $("letterStamp").hidden = true;
+        $("letterTitle").textContent = page.title;
+        $("letterTitle").hidden = !isFirstPage;
+        $("letterBody").textContent = page.body;
+        $("letterProgress").textContent =
+          `${state.letterPage + 1} / ${LETTER_PAGES.length}`;
+        $("letterPrev").style.visibility = isFirstPage ? "hidden" : "visible";
+        $("letterNext").textContent = isLastPage
+          ? "回到照片星球 →"
+          : "下一页 →";
+      }
+
+      /* 结尾页继续点击会回到照片星球；其他页面则进入下一页。 */
+      function nextLetterPage() {
+        if (state.letterPage === LETTER_PAGES.length - 1) {
+          show("archive");
+          return;
+        }
+        state.letterPage += 1;
+        renderLetter();
+      }
+
+      function previousLetterPage() {
+        if (state.letterPage === 0) return;
+        state.letterPage -= 1;
+        renderLetter();
+      }
+
+      /* 标题先放大淡出，再切换为信件，形成进入信件的转场。 */
+      function openLetter() {
+        const headline = $("headline");
+        launchEchoBurst();
+        headline.classList.add("is-opening");
+        setTimeout(() => {
+          headline.classList.remove("is-opening");
+          state.letterPage = 0;
+          renderLetter();
+          show("letter");
+          $("letterCard").focus();
+        }, 820);
+      }
+      /* 用指定图片填入容器；默认原图，也可传入缩略图。 */
+      function setPhoto(el, s, imageUrl = s.photo) {
+        const isStoryShot = el.id === "shot";
+        el.style.background = s.tone;
+        if (!isStoryShot) el.textContent = s.label;
+        if (imageUrl) {
+          el.style.backgroundImage = `url('${imageUrl}')`;
+          el.style.backgroundSize = "cover";
+          el.style.backgroundPosition = "center";
+          if (!isStoryShot) el.textContent = "";
+        }
+      }
+
+      /*
+       * 仅解锁后解密缩略图，避免进入照片星球时逐张等待。
+       * thumbnailUrl 是临时 blob URL，不会暴露真实文件路径。
+       */
+      async function preloadThumbnails() {
+        await Promise.all(
+          STORIES.map(async (story) => {
+            story.thumbnailUrl = await loadAssetUrl(story.thumbnail);
+          }),
+        );
+      }
+      function buildSphere() {
+        const world = $("world"),
+          r = Math.min(innerWidth, innerHeight) * 0.42,
+          ga = Math.PI * (3 - Math.sqrt(5));
+        [...world.querySelectorAll(".card")].forEach((el) => el.remove());
+        STORIES.forEach((s, i) => {
+          const y = 1 - (i / Math.max(STORIES.length - 1, 1)) * 2,
+            ring = Math.sqrt(1 - y * y),
+            a = i * ga,
+            x = Math.cos(a) * ring,
+            z = Math.sin(a) * ring,
+            card = document.createElement("button");
+          card.className = "card";
+          card.style.setProperty("--tone", s.tone);
+          card.dataset.stamp = s.date;
+          card.style.transform = `translate3d(${x * r}px,${-y * r}px,${z * r}px) rotateY(${(Math.atan2(x, z) * 180) / Math.PI}deg) rotateX(${(Math.asin(y) * 180) / Math.PI}deg) translate(-50%,-50%)`;
+          setPhoto(card, s, s.thumbnailUrl);
+          card.onclick = () => void openStory(i);
+          world.append(card);
+        });
+        paint();
+      }
+      function paint() {
+        $("world").style.transform =
+          `rotateY(${state.yaw}deg) rotateX(${state.pitch}deg)`;
+
+        $("headline").style.transform = `translate(-50%, -50%)
+          rotateX(${-state.pitch}deg)
+          rotateY(${-state.yaw}deg)`;
+      }
+      function buildGrid() {
+        const list = $("gridList");
+        list.innerHTML = "";
+        STORIES.forEach((s, i) => {
+          const b = document.createElement("button");
+          b.className = "grid-item";
+          b.style.setProperty("--tone", s.tone);
+          setPhoto(b, s, s.thumbnailUrl);
+          const t = document.createElement("span");
+          t.textContent = `${s.date} · ${s.title}`;
+          b.append(t);
+          b.onclick = () => void openStory(i);
+          list.append(b);
+        });
+      }
+      async function openStory(i) {
+        const s = STORIES[i];
+        state.index = i;
+        state.photoIndex = 0;
+        $("storyTitle").textContent = s.title;
+        show("lightbox");
+        await updateStoryPhoto();
+      }
+
+      /* 更新灯箱中的当前照片；只有有第二张照片的回忆才显示切换按钮。 */
+      function storyPhotos(story) {
+        const mainPhoto = {
+          photo: story.photo,
+          date: story.date,
+          note: story.note,
+        };
+        const extraPhotos = story.extraPhotos.map((extra) => ({
+          date: story.date,
+          note: story.note,
+          ...extra,
+        }));
+        return [mainPhoto, ...extraPhotos];
+      }
+
+      async function updateStoryPhoto() {
+        const story = STORIES[state.index];
+        const photos = storyPhotos(story);
+        const currentPhoto = photos[state.photoIndex];
+        const toggle = $("photoToggle");
+
+        $("chapter").textContent =
+          `MEMORY ${String(state.index + 1).padStart(2, "0")} · ` +
+          currentPhoto.date;
+        $("storyNote").textContent = currentPhoto.note;
+        const requestedPhoto = currentPhoto.photo;
+        toggle.hidden = photos.length < 2;
+        toggle.textContent = `切换照片 ${state.photoIndex + 1} / ${photos.length}`;
+        setPhoto($("shot"), story, await loadAssetUrl(requestedPhoto));
+      }
+      $("passwordForm").onsubmit = async (e) => {
+        e.preventDefault();
+        show("loading");
+        try {
+          await unlockPrivateArchive($("passwordInput").value);
+          show("archive");
+          void playBgm();
+        } catch {
+          privateManifest = null;
+          privateKey = null;
+          assetUrlCache.clear();
+          show("password");
+          $("hint").textContent = `${CONFIG.hint}\n\n密码不对，再试一次`;
+          $("passwordInput").select();
+        }
+      };
+      $("photoToggle").onclick = () => {
+        const photos = storyPhotos(STORIES[state.index]);
+        state.photoIndex = (state.photoIndex + 1) % photos.length;
+        void updateStoryPhoto();
+      };
+      $("musicToggle").onclick = toggleBgm;
+      $("bgm").onplay = syncMusicToggle;
+      $("bgm").onpause = syncMusicToggle;
+      $("headline").onclick = openLetter;
+      $("letterClose").onclick = () => show("archive");
+      $("letterPrev").onclick = previousLetterPage;
+      $("letterNext").onclick = nextLetterPage;
+      $("letterCard").onclick = (event) => {
+        if (event.target.closest("button")) return;
+        nextLetterPage();
+      };
+      $("archive").onpointerdown = (e) => {
+        if (e.target.closest(".card, #headline")) return;
+        state.start = {
+          x: e.clientX,
+          y: e.clientY,
+          yaw: state.yaw,
+          pitch: state.pitch,
+        };
+        e.currentTarget.setPointerCapture(e.pointerId);
+      };
+      $("archive").onpointermove = (e) => {
+        if (!state.start) return;
+        state.yaw = state.start.yaw + (e.clientX - state.start.x) * 0.28;
+        state.pitch = Math.max(
+          -30,
+          Math.min(24, state.start.pitch - (e.clientY - state.start.y) * 0.2),
+        );
+        paint();
+      };
+      $("archive").onpointerup = () => (state.start = null);
+      $("gridOpen").onclick = () => {
+        buildGrid();
+        show("grid");
+      };
+      $("gridClose").onclick = () => show("archive");
+      $("lightClose").onclick = () => show("archive");
+      $("prev").onclick = () =>
+        void openStory((state.index + STORIES.length - 1) % STORIES.length);
+      $("next").onclick = () =>
+        void openStory((state.index + 1) % STORIES.length);
+      $("menuOpen").onclick = () => show("menu");
+      $("menuClose").onclick = () => show("archive");
+      $("menuArchive").onclick = () => {
+        buildGrid();
+        show("grid");
+      };
+      $("menuRestart").onclick = () => {
+        $("family").classList.remove("zoom");
+        show("family");
+        startFocus();
+      };
+      /* 自动开场：先展示纯合照，随后镜头对准爸爸，最后淡入密码框。 */
+      function startFocus() {
+        setTimeout(() => $("family").classList.add("zoom"), 1900);
+        setTimeout(() => {
+          $("hint").textContent = CONFIG.hint;
+          show("password");
+          $("passwordInput").focus();
+        }, 6900);
+      }
+      addEventListener("resize", () => {
+        if (STORIES.length) buildSphere();
+      });
+      setupBirthdayEcho();
+      startFocus();
+    </script>
+  </body>
+</html>
