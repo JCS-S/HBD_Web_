@@ -1,1 +1,1 @@
-window.PROTECTED_CONFIG = {"salt":"4aDRTWmfG9imG/OOEmSTMw==","iterations":310000};
+window.PROTECTED_CONFIG = {"salt":"UV0BYh5nxOYstIF9uGn1/g==","iterations":310000};
